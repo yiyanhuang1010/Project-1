@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vibe Capture — API settings</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 520px;
+        margin: 24px auto;
+        padding: 0 16px;
+        line-height: 1.5;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin-top: 16px;
+      }
+      input[type="password"] {
+        width: 100%;
+        margin-top: 6px;
+        padding: 8px 10px;
+        font-size: 14px;
+      }
+      button {
+        margin-top: 20px;
+        padding: 10px 16px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      #msg {
+        margin-top: 12px;
+        color: #15803d;
+      }
+      .hint {
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>API settings</h1>
+    <p>
+      This extension uses the <strong>Google Gemini API</strong> (<code>…/v1beta/models/…:generateContent</code>) to
+      analyze screenshots. Create an API key in
+      <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>.
+    </p>
+
+    <label for="key">Gemini API key</label>
+    <input type="password" id="key" autocomplete="off" placeholder="AIza…" />
+    <p class="hint">Your key is stored only in Chrome sync storage on your device; it is not sent to the extension author.</p>
+
+    <button type="button" id="save">Save</button>
+    <p id="msg"></p>
+
+    <script src="options.js"></script>
+  </body>
+</html>

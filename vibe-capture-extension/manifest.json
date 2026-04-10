@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Vibe Capture",
+  "version": "1.1.6",
+  "description": "Capture the current page and generate a Vibe Coding prompt with Google Gemini",
+  "permissions": ["sidePanel", "storage", "tabs", "scripting", "activeTab"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Open Vibe Capture"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "options_page": "options.html"
+}

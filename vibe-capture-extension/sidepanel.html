@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vibe Capture</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header class="header">
+      <h1>Vibe Capture</h1>
+      <a class="link-settings" href="options.html" target="_blank">API settings</a>
+    </header>
+
+    <div class="field-row">
+      <label class="label" for="model-select">Model</label>
+      <select id="model-select" class="select"></select>
+    </div>
+
+    <button id="capture-btn" type="button" class="btn-primary">Capture page vibe</button>
+    <p id="status" class="status" aria-live="polite"></p>
+
+    <section class="output-section">
+      <label class="label" for="result">Vibe Coding prompt</label>
+      <textarea id="result" class="result" readonly rows="14" placeholder="After capture and Gemini, the generated text appears here…"></textarea>
+      <button id="copy-btn" type="button" class="btn-secondary" disabled>Copy to clipboard</button>
+    </section>
+
+    <script src="sidepanel.js"></script>
+  </body>
+</html>
