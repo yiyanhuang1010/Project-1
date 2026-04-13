@@ -43,14 +43,28 @@
   <body>
     <h1>API settings</h1>
     <p>
-      This extension uses the <strong>Google Gemini API</strong> (<code>…/v1beta/models/…:generateContent</code>) to
-      analyze screenshots. Create an API key in
-      <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>.
+      The side panel can call <strong>Google Gemini</strong> (<code>generativelanguage.googleapis.com</code>) or
+      <strong>Anthropic Claude</strong> (<code>api.anthropic.com</code>) with your screenshot. Pick the model in the
+      sidebar, then paste the matching key below.
     </p>
 
-    <label for="key">Gemini API key</label>
-    <input type="password" id="key" autocomplete="off" placeholder="AIza…" />
-    <p class="hint">Your key is stored only in Chrome sync storage on your device; it is not sent to the extension author.</p>
+    <label for="gemini-key">Google Gemini API key</label>
+    <input type="password" id="gemini-key" autocomplete="off" placeholder="AIza…" />
+    <p class="hint">
+      Create a key in
+      <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>. Used when a
+      Gemini model is selected.
+    </p>
+
+    <label for="anthropic-key">Anthropic API key</label>
+    <input type="password" id="anthropic-key" autocomplete="off" placeholder="sk-ant-…" />
+    <p class="hint">
+      Create a key in
+      <a href="https://console.anthropic.com/" target="_blank" rel="noopener">Anthropic Console</a>. Used when a Claude
+      model is selected.
+    </p>
+
+    <p class="hint">Keys are stored only in Chrome sync storage on your device; they are not sent to the extension author.</p>
 
     <button type="button" id="save">Save</button>
     <p id="msg"></p>

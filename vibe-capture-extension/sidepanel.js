@@ -1,9 +1,40 @@
-const GEMINI_MODEL_OPTIONS = [
-  { label: "Gemini 3.1 Flash", id: "gemini-3-flash-preview" },
-  { label: "Gemini 2.5 Pro", id: "gemini-2.5-pro" },
+/** @typedef {{ label: string; id: string; provider: "gemini" | "claude" }} ModelOption */
+
+/** @type {ModelOption[]} */
+const MODEL_OPTIONS = [
+  { label: "Gemini 3.1 Flash", id: "gemini-3-flash-preview", provider: "gemini" },
+  { label: "Gemini 2.5 Pro", id: "gemini-2.5-pro", provider: "gemini" },
+  // gemini-1.5-* is no longer exposed for generateContent on many keys; use 2.x family instead.
+  { label: "Gemini 2.5 Flash", id: "gemini-2.5-flash", provider: "gemini" },
+  { label: "Gemini 2.0 Flash", id: "gemini-2.0-flash", provider: "gemini" },
+  { label: "Claude Sonnet 4", id: "claude-sonnet-4-20250514", provider: "claude" },
+  { label: "Claude 3.5 Sonnet", id: "claude-3-5-sonnet-20241022", provider: "claude" },
+  { label: "Claude 3.5 Haiku", id: "claude-3-5-haiku-20241022", provider: "claude" },
+  { label: "Claude 3 Opus", id: "claude-3-opus-20240229", provider: "claude" },
 ];
 
-const DEFAULT_MODEL_ID = GEMINI_MODEL_OPTIONS[0].id;
+const DEFAULT_MODEL_ID = MODEL_OPTIONS[0].id;
+
+const ANTHROPIC_MESSAGES_VERSION = "2023-06-01";
+
+function getModelSpec(modelId) {
+  return MODEL_OPTIONS.find((o) => o.id === modelId) || null;
+}
+
+/** Legacy / removed Gemini 1.5 IDs in storage → working models on current API */
+const LEGACY_GEMINI_MODEL_ID_MAP = {
+  "gemini-1.5-pro": "gemini-2.5-pro",
+  "gemini-1.5-flash": "gemini-2.5-flash",
+  "gemini-1.5-pro-001": "gemini-2.5-pro",
+  "gemini-1.5-flash-001": "gemini-2.5-flash",
+  "gemini-1.5-pro-002": "gemini-2.5-pro",
+  "gemini-1.5-flash-002": "gemini-2.5-flash",
+};
+
+function normalizeStoredGeminiModelId(id) {
+  const t = (id || "").trim();
+  return LEGACY_GEMINI_MODEL_ID_MAP[t] || t;
+}
 
 const SYSTEM_PROMPT = `Role: 你是一位严谨的前端工程专家与视觉分析师。
 
@@ -124,21 +155,33 @@ function cropScreenshotToRegionBase64(dataUrl, rect, viewportWidth, viewportHeig
   });
 }
 
-async function getStoredApiKey() {
+async function getStoredGeminiKey() {
   const { geminiApiKey } = await chrome.storage.sync.get("geminiApiKey");
   return (geminiApiKey || "").trim();
 }
 
+async function getStoredAnthropicKey() {
+  const { anthropicApiKey } = await chrome.storage.sync.get("anthropicApiKey");
+  return (anthropicApiKey || "").trim();
+}
+
 async function getStoredModelId() {
-  const { geminiModelId } = await chrome.storage.sync.get("geminiModelId");
-  const id = geminiModelId || DEFAULT_MODEL_ID;
-  const known = GEMINI_MODEL_OPTIONS.some((o) => o.id === id);
+  const { vibeAnalysisModelId, geminiModelId } = await chrome.storage.sync.get([
+    "vibeAnalysisModelId",
+    "geminiModelId",
+  ]);
+  const raw = (vibeAnalysisModelId || geminiModelId || DEFAULT_MODEL_ID || "").trim() || DEFAULT_MODEL_ID;
+  const id = normalizeStoredGeminiModelId(raw);
+  if (id !== raw && MODEL_OPTIONS.some((o) => o.id === id)) {
+    chrome.storage.sync.set({ vibeAnalysisModelId: id, geminiModelId: id });
+  }
+  const known = MODEL_OPTIONS.some((o) => o.id === id);
   return known ? id : DEFAULT_MODEL_ID;
 }
 
 function buildModelSelect() {
   modelSelect.innerHTML = "";
-  for (const opt of GEMINI_MODEL_OPTIONS) {
+  for (const opt of MODEL_OPTIONS) {
     const el = document.createElement("option");
     el.value = opt.id;
     el.textContent = opt.label;
@@ -153,10 +196,11 @@ async function initModelSelect() {
 }
 
 modelSelect.addEventListener("change", () => {
-  chrome.storage.sync.set({ geminiModelId: modelSelect.value });
+  const value = modelSelect.value;
+  chrome.storage.sync.set({ vibeAnalysisModelId: value, geminiModelId: value });
 });
 
-function buildGeminiUserText(cssSnapshot) {
+function buildAnalysisUserText(cssSnapshot) {
   if (cssSnapshot == null) {
     return USER_TEXT;
   }
@@ -164,15 +208,16 @@ function buildGeminiUserText(cssSnapshot) {
 }
 
 /**
- * @param {(info: { attempt: number; maxAttempts: number; delayMs: number }) => void} [onRetry503]
+ * @param {(info: { attempt: number; maxAttempts: number; delayMs: number; provider?: string }) => void} [onRetry503]
  * @param {object | null | undefined} [cssSnapshot]  来自页面的 computed 样式快照（可含于 pick）
  */
 async function analyzeWithGemini(base64Png, apiKey, modelId, onRetry503, cssSnapshot) {
+  const resolvedModelId = normalizeStoredGeminiModelId(modelId);
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-    modelId,
+    resolvedModelId,
   )}:generateContent`;
 
-  const fullText = `${SYSTEM_PROMPT}\n\n---\n\n${buildGeminiUserText(cssSnapshot)}`;
+  const fullText = `${SYSTEM_PROMPT}\n\n---\n\n${buildAnalysisUserText(cssSnapshot)}`;
 
   const body = {
     contents: [
@@ -258,14 +303,14 @@ async function analyzeWithGemini(base64Png, apiKey, modelId, onRetry503, cssSnap
 
     if (res.status === 503 && attempt < maxAttempts) {
       const delayMs = 2000 * 2 ** (attempt - 1);
-      onRetry503?.({ attempt, maxAttempts, delayMs });
+      onRetry503?.({ attempt, maxAttempts, delayMs, provider: "gemini" });
       await new Promise((r) => setTimeout(r, delayMs));
       continue;
     }
 
     if (res.status === 503) {
       throw new Error(
-        "Gemini 503: This model is under heavy load after automatic retries. Try again later, or switch to another model (e.g. Gemini 2.5 Pro) in the sidebar.",
+        "Gemini 503: This model is under heavy load after automatic retries. Try again later, or pick another model in the sidebar.",
       );
     }
 
@@ -275,10 +320,127 @@ async function analyzeWithGemini(base64Png, apiKey, modelId, onRetry503, cssSnap
   throw new Error("Internal error: Gemini request did not complete.");
 }
 
+/**
+ * @param {(info: { attempt: number; maxAttempts: number; delayMs: number; provider?: string }) => void} [onRetrySlow]
+ */
+async function analyzeWithClaude(base64Png, apiKey, modelId, onRetrySlow, cssSnapshot) {
+  const url = "https://api.anthropic.com/v1/messages";
+  const userText = buildAnalysisUserText(cssSnapshot);
+  const body = {
+    model: modelId,
+    max_tokens: 8192,
+    system: SYSTEM_PROMPT,
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: "image/png",
+              data: base64Png,
+            },
+          },
+          { type: "text", text: userText },
+        ],
+      },
+    ],
+  };
+
+  const maxAttempts = 4;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": ANTHROPIC_MESSAGES_VERSION,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const raw = await res.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      throw new Error(`Anthropic returned non-JSON (HTTP ${res.status}): ${raw.slice(0, 300)}`);
+    }
+
+    if (res.ok) {
+      const parts = data.content;
+      const text = Array.isArray(parts)
+        ? parts
+            .filter((p) => p && p.type === "text" && typeof p.text === "string")
+            .map((p) => p.text)
+            .join("")
+            .trim()
+        : "";
+      const stop = data.stop_reason;
+      if (!text && stop === "max_tokens") {
+        throw new Error("Claude returned no text (max_tokens). Try again or use a smaller crop.");
+      }
+      return text;
+    }
+
+    const msg = data.error?.message || data.message || raw.slice(0, 400);
+
+    if (res.status === 429) {
+      throw new Error(`Claude 429: Rate limit or quota. (${msg})`);
+    }
+
+    if ((res.status === 529 || res.status === 503) && attempt < maxAttempts) {
+      const delayMs = 2000 * 2 ** (attempt - 1);
+      onRetrySlow?.({ attempt, maxAttempts, delayMs, provider: "claude" });
+      await new Promise((r) => setTimeout(r, delayMs));
+      continue;
+    }
+
+    throw new Error(`Claude API ${res.status}: ${msg}`);
+  }
+
+  throw new Error("Internal error: Claude request did not complete.");
+}
+
+/**
+ * @param {(info: { attempt: number; maxAttempts: number; delayMs: number; provider?: string }) => void} [onRetrySlow]
+ */
+async function analyzeWithSelectedModel(base64Png, modelId, onRetrySlow, cssSnapshot) {
+  const spec = getModelSpec(modelId);
+  if (!spec) {
+    throw new Error("Unknown model.");
+  }
+  if (spec.provider === "gemini") {
+    const key = await getStoredGeminiKey();
+    if (!key) {
+      throw new Error('Add your Gemini API key under "API settings" first.');
+    }
+    return analyzeWithGemini(base64Png, key, modelId, onRetrySlow, cssSnapshot);
+  }
+  if (spec.provider === "claude") {
+    const key = await getStoredAnthropicKey();
+    if (!key) {
+      throw new Error('Add your Anthropic API key under "API settings" first.');
+    }
+    return analyzeWithClaude(base64Png, key, modelId, onRetrySlow, cssSnapshot);
+  }
+  throw new Error("Unsupported model provider.");
+}
+
 captureBtn.addEventListener("click", async () => {
-  const apiKey = await getStoredApiKey();
-  if (!apiKey) {
+  const modelIdEarly = modelSelect.value || (await getStoredModelId());
+  const specEarly = getModelSpec(modelIdEarly);
+  if (!specEarly) {
+    setStatus("Invalid model selection.");
+    return;
+  }
+  if (specEarly.provider === "gemini" && !(await getStoredGeminiKey())) {
     setStatus('Add your Gemini API key under "API settings" first.');
+    return;
+  }
+  if (specEarly.provider === "claude" && !(await getStoredAnthropicKey())) {
+    setStatus('Add your Anthropic API key under "API settings" first.');
     return;
   }
 
@@ -324,14 +486,14 @@ captureBtn.addEventListener("click", async () => {
     }
 
     const modelId = modelSelect.value || (await getStoredModelId());
-    setStatus("Calling Gemini to analyze the page…");
-    const text = await analyzeWithGemini(
+    const spec = getModelSpec(modelId);
+    setStatus(spec?.provider === "claude" ? "Calling Claude to analyze the page…" : "Calling Gemini to analyze the page…");
+    const text = await analyzeWithSelectedModel(
       base64,
-      apiKey,
       modelId,
       ({ attempt, maxAttempts, delayMs }) => {
         setStatus(
-          `Model busy (503). Retrying in ~${Math.round(delayMs / 1000)}s (attempt ${attempt} of ${maxAttempts})…`,
+          `Model busy. Retrying in ~${Math.round(delayMs / 1000)}s (attempt ${attempt} of ${maxAttempts})…`,
         );
       },
       cssSnapshot,
@@ -355,9 +517,18 @@ captureBtn.addEventListener("click", async () => {
 });
 
 regionVibeBtn.addEventListener("click", async () => {
-  const apiKey = await getStoredApiKey();
-  if (!apiKey) {
+  const modelIdEarly = modelSelect.value || (await getStoredModelId());
+  const specEarly = getModelSpec(modelIdEarly);
+  if (!specEarly) {
+    setStatus("Invalid model selection.");
+    return;
+  }
+  if (specEarly.provider === "gemini" && !(await getStoredGeminiKey())) {
     setStatus('Add your Gemini API key under "API settings" first.');
+    return;
+  }
+  if (specEarly.provider === "claude" && !(await getStoredAnthropicKey())) {
+    setStatus('Add your Anthropic API key under "API settings" first.');
     return;
   }
 
@@ -422,14 +593,14 @@ regionVibeBtn.addEventListener("click", async () => {
     );
 
     const modelId = modelSelect.value || (await getStoredModelId());
-    setStatus("Calling Gemini on the cropped region…");
-    const text = await analyzeWithGemini(
+    const spec = getModelSpec(modelId);
+    setStatus(spec?.provider === "claude" ? "Calling Claude on the cropped region…" : "Calling Gemini on the cropped region…");
+    const text = await analyzeWithSelectedModel(
       base64,
-      apiKey,
       modelId,
       ({ attempt, maxAttempts, delayMs }) => {
         setStatus(
-          `Model busy (503). Retrying in ~${Math.round(delayMs / 1000)}s (attempt ${attempt} of ${maxAttempts})…`,
+          `Model busy. Retrying in ~${Math.round(delayMs / 1000)}s (attempt ${attempt} of ${maxAttempts})…`,
         );
       },
       pick.cssSnapshot ?? null,
