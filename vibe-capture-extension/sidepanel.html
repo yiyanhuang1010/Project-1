@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -17,7 +17,14 @@
       <select id="model-select" class="select"></select>
     </div>
 
-    <button id="capture-btn" type="button" class="btn-primary">Capture page vibe</button>
+    <div class="actions-stack">
+      <button id="capture-btn" type="button" class="btn-linear btn-linear-neutral">全屏捕获</button>
+      <button id="region-vibe-btn" type="button" class="btn-linear btn-linear-blue">框选区域提炼 Vibe</button>
+      <div id="loading-indicator" class="loading-wrap is-hidden" aria-hidden="true" role="status">
+        <span class="spinner" aria-label="Loading"></span>
+      </div>
+    </div>
+
     <p id="status" class="status" aria-live="polite"></p>
 
     <section class="output-section">

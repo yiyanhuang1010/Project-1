@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Vibe Capture",
-  "version": "1.1.6",
+  "version": "1.2.3",
   "description": "Capture the current page and generate a Vibe Coding prompt with Google Gemini",
   "permissions": ["sidePanel", "storage", "tabs", "scripting", "activeTab"],
   "host_permissions": ["<all_urls>"],
