@@ -5,6 +5,10 @@
  * Default snapshot: getComputedStyle(target) at rest.
  * Hover snapshot: temporarily mirrors :hover rules by rewriting selectors to use a probe class
  * on the target and its ancestors, then re-reads computed style (transition/animation etc.).
+ *
+ * schemaVersion 2+: `motionEvidence` adds ancestor-chain motion/animation summaries so region
+ * picks capture parent-owned keyframes/transitions (not only the hit-tested leaf). Full-page
+ * center sample uses the same strategy from the element at the viewport center.
  */
 (function () {
   "use strict";
@@ -79,6 +83,94 @@
     "background-color",
     "color",
   ];
+
+  const MOTION_COMPUTED_KEYS = [...TRANSITION_KEYS, ...ANIMATION_KEYS];
+
+  const MAX_ANCESTOR_MOTION_DEPTH = 16;
+
+  /**
+   * @param {Element} el
+   * @returns {object[]}
+   */
+  function summarizeWebAnimationsForElement(el) {
+    if (!el || typeof el.getAnimations !== "function") return [];
+    try {
+      const list = el.getAnimations({ subtree: false });
+      const out = [];
+      const cap = Math.min(list.length, 8);
+      for (let i = 0; i < cap; i++) {
+        const a = list[i];
+        let durationMs = null;
+        let easing = null;
+        let iterations = null;
+        try {
+          const eff = a.effect;
+          if (eff && typeof eff.getTiming === "function") {
+            const tm = eff.getTiming();
+            if (tm && typeof tm.duration === "number" && !Number.isNaN(tm.duration)) {
+              durationMs = tm.duration === Infinity ? "Infinity" : Math.round(tm.duration);
+            }
+            if (tm && tm.easing != null) easing = String(tm.easing);
+            if (tm && tm.iterations != null) iterations = tm.iterations;
+          }
+        } catch {
+          /* ignore */
+        }
+        let nameHint = null;
+        try {
+          if (a.animationName) nameHint = String(a.animationName);
+          else if (a.id) nameHint = String(a.id);
+        } catch {
+          /* ignore */
+        }
+        out.push({
+          playState: a.playState != null ? String(a.playState) : null,
+          durationMs,
+          easing,
+          iterations,
+          nameHint,
+        });
+      }
+      return out;
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * From target element up to document / shadow roots: motion-related computed styles + Web Animations API.
+   * @param {Element} targetEl
+   * @param {number} maxDepth
+   */
+  function buildAncestorMotionChain(targetEl, maxDepth) {
+    const chain = [];
+    let cur = targetEl;
+    let depth = 0;
+    while (cur && cur.nodeType === Node.ELEMENT_NODE && depth < maxDepth) {
+      const cs = getComputedStyle(cur);
+      const motionComputed = readComputedMap(cs, MOTION_COMPUTED_KEYS);
+      const animationsFromAPI = summarizeWebAnimationsForElement(cur);
+      chain.push({
+        depth,
+        tagName: cur.tagName,
+        id: cur.id || null,
+        className:
+          typeof cur.className === "string" && cur.className && cur.className.length < 160 ? cur.className : null,
+        motionComputed,
+        animationsFromAPI,
+      });
+      const p = cur.parentNode;
+      if (p instanceof ShadowRoot) {
+        cur = p.host;
+      } else if (p && p.nodeType === Node.ELEMENT_NODE) {
+        cur = /** @type {Element} */ (p);
+      } else {
+        break;
+      }
+      depth++;
+    }
+    return chain;
+  }
 
   function readProp(cs, prop) {
     try {
@@ -338,12 +430,18 @@
 
   function buildComputedSnapshot(el, sampleX, sampleY) {
     if (!el || el.nodeType !== 1) {
-      return { error: "invalid_element", meta: { samplePoint: { x: sampleX, y: sampleY } } };
+      return {
+        schemaVersion: 2,
+        error: "invalid_element",
+        meta: { samplePoint: { x: sampleX, y: sampleY } },
+        motionEvidence: null,
+      };
     }
     const cs = getComputedStyle(el);
     const computed = readComputedMap(cs, ALL_SNAPSHOT_KEYS);
 
     const base = {
+      schemaVersion: 2,
       meta: {
         samplePoint: { x: sampleX, y: sampleY },
         tagName: el.tagName,
@@ -355,6 +453,14 @@
       "transition-duration": computed["transition-duration"],
       "transition-timing-function": computed["transition-timing-function"],
       "animation-name": computed["animation-name"],
+      motionEvidence: {
+        version: "likethis.motion.v1",
+        notes: [
+          "ancestorChain: target (depth 0) then parents; use for motion owned by ancestors (e.g. parent keyframes).",
+          "animationsFromAPI: Web Animations API on each element (subtree:false).",
+        ],
+        ancestorChain: buildAncestorMotionChain(el, MAX_ANCESTOR_MOTION_DEPTH),
+      },
       hoverState: readHoverSimulatedSnapshot(el, computed),
     };
 
@@ -380,6 +486,7 @@
       return buildComputedSnapshot(node, cx, cy);
     }
     return {
+      schemaVersion: 2,
       error: "no_target_element",
       meta: { samplePoint: { x: cx, y: cy } },
       computed: {},
@@ -387,6 +494,7 @@
       "transition-duration": "",
       "transition-timing-function": "",
       "animation-name": "",
+      motionEvidence: null,
       hoverState: null,
     };
   }

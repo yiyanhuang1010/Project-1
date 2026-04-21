@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Likethis">
+  <defs>
+    <linearGradient id="likethis-g" x1="24" y1="20" x2="104" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7c87f0"/>
+      <stop offset="1" stop-color="#5e6ad2"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#09090b"/>
+  <path
+    fill="none"
+    stroke="url(#likethis-g)"
+    stroke-width="5"
+    stroke-linecap="round"
+    d="M36 40H24V28M92 28v12h12M36 88H24v12M104 88h-12v12"
+  />
+  <rect x="40" y="40" width="48" height="48" rx="12" fill="none" stroke="url(#likethis-g)" stroke-width="3.5" opacity="0.9"/>
+  <path fill="url(#likethis-g)" d="M64 46l3.2 6.5 7.2.7-5.2 5.1 1.2 7.2-6.4-3.4-6.4 3.4 1.2-7.2-5.2-5.1 7.2-.7z"/>
+</svg>

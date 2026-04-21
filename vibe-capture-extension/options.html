@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Vibe Capture — API settings</title>
+    <title>Likethis — API settings</title>
     <style>
       body {
         font-family: system-ui, sans-serif;
@@ -38,10 +38,27 @@
         color: #6b7280;
         margin-top: 4px;
       }
+      .options-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+      .options-brand h1 {
+        margin: 0;
+        font-size: 1.35rem;
+      }
+      .options-brand img {
+        border-radius: 10px;
+        flex-shrink: 0;
+      }
     </style>
   </head>
   <body>
-    <h1>API settings</h1>
+    <div class="options-brand">
+      <img src="icons/likethis.svg" width="40" height="40" alt="" />
+      <h1>Likethis — API settings</h1>
+    </div>
     <p>
       The side panel can call <strong>Google Gemini</strong> (<code>generativelanguage.googleapis.com</code>) or
       <strong>Anthropic Claude</strong> (<code>api.anthropic.com</code>) with your screenshot. Pick the model in the

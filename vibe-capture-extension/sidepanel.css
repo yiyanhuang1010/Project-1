@@ -13,6 +13,33 @@
   --accent-blue-hover: #6b77e0;
   --glow-neutral: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 4px 24px rgba(255, 255, 255, 0.04);
   --glow-blue: 0 0 0 1px rgba(94, 106, 210, 0.35), 0 6px 28px rgba(94, 106, 210, 0.18);
+  --icon-btn-bg: rgba(255, 255, 255, 0.06);
+  --icon-btn-border: rgba(255, 255, 255, 0.12);
+  --placeholder: #71717a;
+  --tooltip-bg: #27272a;
+  --tooltip-fg: #fafafa;
+  --tooltip-border: rgba(255, 255, 255, 0.12);
+  --tooltip-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme="light"] {
+  --bg: #fafafa;
+  --bg-elevated: #ffffff;
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  --border-fine: rgba(0, 0, 0, 0.12);
+  --text: #18181b;
+  --text-muted: #71717a;
+  --accent-blue: #4f5fc4;
+  --accent-blue-hover: #5e6ad2;
+  --glow-neutral: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 4px 20px rgba(0, 0, 0, 0.06);
+  --glow-blue: 0 0 0 1px rgba(94, 106, 210, 0.28), 0 6px 24px rgba(94, 106, 210, 0.12);
+  --icon-btn-bg: rgba(0, 0, 0, 0.04);
+  --icon-btn-border: rgba(0, 0, 0, 0.1);
+  --placeholder: #a1a1aa;
+  --tooltip-bg: #ffffff;
+  --tooltip-fg: #18181b;
+  --tooltip-border: rgba(0, 0, 0, 0.1);
+  --tooltip-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
 }
 
 body {
@@ -29,10 +56,27 @@ body {
 
 .header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-logo {
+  flex-shrink: 0;
+  display: block;
+  border-radius: 8px;
+}
+
+.brand h1 {
+  margin: 0;
 }
 
 h1 {
@@ -47,6 +91,7 @@ h1 {
   color: var(--accent-blue-hover);
   text-decoration: none;
   opacity: 0.9;
+  white-space: nowrap;
 }
 
 .link-settings:hover {
@@ -54,8 +99,218 @@ h1 {
   opacity: 1;
 }
 
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.label-row .label--inline {
+  margin-bottom: 0;
+}
+
+.label-row__aside {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.api-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.api-status-dot--ok {
+  background: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
+}
+
+.api-status-dot--missing {
+  background: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+html[data-theme="light"] .api-status-dot--ok {
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.35);
+}
+
+html[data-theme="light"] .api-status-dot--missing {
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.28);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--icon-btn-border);
+  border-radius: 8px;
+  background: var(--icon-btn-bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.icon-btn:hover {
+  color: var(--text);
+  border-color: var(--border-fine);
+  box-shadow: var(--glow-neutral);
+}
+
+.icon-btn:focus-visible {
+  outline: none;
+  border-color: rgba(94, 106, 210, 0.45);
+  box-shadow: 0 0 0 3px rgba(94, 106, 210, 0.12);
+}
+
+.icon-btn__svg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.icon-btn__svg svg {
+  display: block;
+}
+
+/* Professional hover tooltips (Linear / Notion–style) */
+.tooltip-anchor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+}
+
+.tooltip-anchor--theme {
+  flex-shrink: 0;
+}
+
+.tooltip-anchor--dot {
+  min-width: 28px;
+  min-height: 28px;
+}
+
+/* Below the trigger so Chrome’s side-panel top chrome doesn’t clip the bubble */
+.tooltip-anchor--align-end .ui-tooltip,
+.tooltip-anchor--theme .ui-tooltip,
+.tooltip-anchor--dot .ui-tooltip {
+  left: auto;
+  right: 0;
+  transform: translateY(-2px);
+}
+
+.ui-tooltip {
+  pointer-events: none;
+  position: absolute;
+  z-index: 2147483647;
+  top: calc(100% + 2px);
+  bottom: auto;
+  left: 50%;
+  transform: translate(-50%, -2px);
+  padding: 6px 10px;
+  max-width: min(240px, calc(100vw - 24px));
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  min-width: 140px;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  color: var(--tooltip-fg);
+  background: var(--tooltip-bg);
+  border: 1px solid var(--tooltip-border);
+  box-shadow: var(--tooltip-shadow);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease,
+    visibility 0.12s;
+}
+
+.ui-tooltip--singleline {
+  min-width: 0;
+  max-width: calc(100vw - 24px);
+  width: max-content;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ui-tooltip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  margin-left: -6px;
+  border: 6px solid transparent;
+  border-bottom-color: var(--tooltip-bg);
+}
+
+.tooltip-anchor--align-end .ui-tooltip::after,
+.tooltip-anchor--theme .ui-tooltip::after,
+.tooltip-anchor--dot .ui-tooltip::after {
+  left: auto;
+  right: 12px;
+  margin-left: 0;
+}
+
+.tooltip-anchor:not(.tooltip-anchor--align-end):not(.tooltip-anchor--theme):not(.tooltip-anchor--dot):hover
+  .ui-tooltip,
+.tooltip-anchor:not(.tooltip-anchor--align-end):not(.tooltip-anchor--theme):not(.tooltip-anchor--dot):focus-within
+  .ui-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+.tooltip-anchor--align-end:hover .ui-tooltip,
+.tooltip-anchor--align-end:focus-within .ui-tooltip,
+.tooltip-anchor--theme:hover .ui-tooltip,
+.tooltip-anchor--theme:focus-within .ui-tooltip,
+.tooltip-anchor--dot:hover .ui-tooltip,
+.tooltip-anchor--dot:focus-within .ui-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tooltip-anchor--theme:hover .ui-tooltip,
+.tooltip-anchor--theme:focus-within .ui-tooltip,
+.tooltip-anchor--dot:hover .ui-tooltip,
+.tooltip-anchor--dot:focus-within .ui-tooltip {
+  transform: translateY(0);
+}
+
+.tooltip-anchor--align-end:hover .ui-tooltip,
+.tooltip-anchor--align-end:focus-within .ui-tooltip {
+  transform: translateY(0);
+}
+
 .field-row {
   margin-bottom: 14px;
+}
+
+.field-row--model .label-row {
+  margin-bottom: 6px;
 }
 
 .label {
@@ -125,8 +380,17 @@ h1 {
   background: rgba(255, 255, 255, 0.03);
 }
 
+html[data-theme="light"] .btn-linear-neutral:hover:not(:disabled) {
+  border-color: rgba(0, 0, 0, 0.14);
+  background: rgba(0, 0, 0, 0.02);
+}
+
 .btn-linear-neutral:active:not(:disabled) {
   background: rgba(255, 255, 255, 0.05);
+}
+
+html[data-theme="light"] .btn-linear-neutral:active:not(:disabled) {
+  background: rgba(0, 0, 0, 0.04);
 }
 
 /* 蓝色强调：同系深色底，细蓝边，悬停蓝紫光晕 */
@@ -145,6 +409,12 @@ h1 {
 
 .btn-linear-blue:active:not(:disabled) {
   background: rgba(94, 106, 210, 0.22);
+}
+
+html[data-theme="light"] .btn-linear-blue,
+html[data-theme="light"] .btn-linear-blue:hover:not(:disabled),
+html[data-theme="light"] .btn-linear-blue:active:not(:disabled) {
+  color: #1e1b4b;
 }
 
 /* Spinner：默认由 .is-hidden 隐藏 */
@@ -236,5 +506,5 @@ h1 {
 }
 
 .result::placeholder {
-  color: #71717a;
+  color: var(--placeholder);
 }

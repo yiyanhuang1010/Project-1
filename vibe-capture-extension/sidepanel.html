@@ -1,35 +1,83 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Vibe Capture</title>
+    <title>Likethis</title>
     <link rel="stylesheet" href="sidepanel.css" />
   </head>
   <body>
     <header class="header">
-      <h1>Vibe Capture</h1>
-      <a class="link-settings" href="options.html" target="_blank">API settings</a>
+      <div class="brand">
+        <img class="brand-logo" src="icons/likethis.svg" width="32" height="32" alt="" />
+        <h1>Likethis</h1>
+      </div>
+      <div class="tooltip-anchor tooltip-anchor--theme">
+        <button
+          type="button"
+          id="theme-toggle"
+          class="icon-btn"
+          aria-pressed="true"
+          aria-label="Switch to light mode"
+        >
+          <span id="theme-toggle-icon" class="icon-btn__svg" aria-hidden="true"></span>
+        </button>
+        <span id="tooltip-theme" class="ui-tooltip ui-tooltip--singleline" aria-hidden="true"></span>
+      </div>
     </header>
 
     <div class="field-row">
-      <label class="label" for="model-select">Model</label>
+      <label class="label" for="lang-select" id="label-lang">Language</label>
+      <select id="lang-select" class="select" aria-label="Language">
+        <option value="en">English</option>
+        <option value="zh">中文</option>
+      </select>
+    </div>
+
+    <div class="field-row">
+      <label class="label" for="motion-output-mode" id="label-motion-output">Motion output</label>
+      <select id="motion-output-mode" class="select" aria-label="Motion output mode">
+        <option value="designLabels">Design labels (default)</option>
+        <option value="technicalSummary">Technical summary</option>
+      </select>
+    </div>
+
+    <div class="field-row field-row--model">
+      <div class="label-row">
+        <label class="label label--inline" for="model-select" id="label-model">Model</label>
+        <div class="label-row__aside">
+          <div class="tooltip-anchor tooltip-anchor--dot">
+            <span
+              id="api-status-dot"
+              class="api-status-dot api-status-dot--missing"
+              role="status"
+              aria-live="polite"
+              tabindex="0"
+            ></span>
+            <span id="tooltip-api-dot" class="ui-tooltip ui-tooltip--singleline" aria-hidden="true"></span>
+          </div>
+          <div class="tooltip-anchor tooltip-anchor--align-end">
+            <a id="link-settings" class="link-settings" href="options.html" target="_blank">API settings</a>
+            <span id="tooltip-api-link" class="ui-tooltip" aria-hidden="true"></span>
+          </div>
+        </div>
+      </div>
       <select id="model-select" class="select"></select>
     </div>
 
     <div class="actions-stack">
-      <button id="capture-btn" type="button" class="btn-linear btn-linear-neutral">全屏捕获</button>
-      <button id="region-vibe-btn" type="button" class="btn-linear btn-linear-blue">框选区域提炼 Vibe</button>
+      <button id="capture-btn" type="button" class="btn-linear btn-linear-neutral">Capture full page</button>
+      <button id="region-vibe-btn" type="button" class="btn-linear btn-linear-blue">Draw region for Vibe</button>
       <div id="loading-indicator" class="loading-wrap is-hidden" aria-hidden="true" role="status">
-        <span class="spinner" aria-label="Loading"></span>
+        <span id="spinner-el" class="spinner" aria-label="Loading"></span>
       </div>
     </div>
 
     <p id="status" class="status" aria-live="polite"></p>
 
     <section class="output-section">
-      <label class="label" for="result">Vibe Coding prompt</label>
-      <textarea id="result" class="result" readonly rows="14" placeholder="After capture and analysis, the generated text appears here…"></textarea>
+      <label class="label" for="result" id="label-result">Vibe Coding prompt</label>
+      <textarea id="result" class="result" readonly rows="14" placeholder="Generated text will appear here after capture and analysis."></textarea>
       <button id="copy-btn" type="button" class="btn-secondary" disabled>Copy to clipboard</button>
     </section>
 

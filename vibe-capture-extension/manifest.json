@@ -1,15 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "Vibe Capture",
-  "version": "1.3.2",
-  "description": "Capture the current page and generate a Vibe Coding prompt with Gemini or Claude",
+  "name": "Likethis",
+  "version": "1.5.0",
+  "description": "Likethis — capture the page and generate a Vibe Coding prompt with Gemini or Claude",
   "permissions": ["sidePanel", "storage", "tabs", "scripting", "activeTab"],
   "host_permissions": ["<all_urls>", "https://api.anthropic.com/*", "https://generativelanguage.googleapis.com/*"],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Open Vibe Capture"
+    "default_title": "Open Likethis"
   },
   "side_panel": {
     "default_path": "sidepanel.html"
